@@ -1,0 +1,29 @@
+# Built objects
+bin/
+gen/
+out/
+
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Android Studio / IntelliJ
+*.iml
+.idea/
+.idea/caches
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+*.ipr
+*.iws
+
+# User-specific / Sensitive files
+local.properties
+.DS_Store
+captures/
+
+# Room generated files
+/schemas/
