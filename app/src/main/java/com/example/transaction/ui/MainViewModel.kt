@@ -150,6 +150,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateTransaction(transaction: TransactionEntity) {
+        viewModelScope.launch {
+            // Ensure month and year are synced with the date
+            val cal = Calendar.getInstance().apply { timeInMillis = transaction.date }
+            val updated = transaction.copy(
+                month = cal.get(Calendar.MONTH) + 1,
+                year = cal.get(Calendar.YEAR)
+            )
+            repository.insertTransaction(updated)
+        }
+    }
+
+    fun renameAllTransactions(oldMerchant: String, newMerchant: String, newCategory: String) {
+        viewModelScope.launch {
+            repository.renameAllTransactions(oldMerchant, newMerchant, newCategory)
+        }
+    }
+
     fun deleteTransaction(transaction: TransactionEntity) {
         viewModelScope.launch { repository.deleteTransaction(transaction) }
     }

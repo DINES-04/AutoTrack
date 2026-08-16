@@ -15,8 +15,11 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE accountId = :accountId AND month = :month AND year = :year ORDER BY date DESC")
     fun getFilteredTransactions(accountId: Long, month: Int, year: Int): Flow<List<TransactionEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTransaction(transaction: TransactionEntity)
+
+    @Query("UPDATE transactions SET merchant = :newMerchant, category = :newCategory WHERE merchant = :oldMerchant")
+    suspend fun renameAllTransactions(oldMerchant: String, newMerchant: String, newCategory: String)
 
     @Delete
     suspend fun deleteTransaction(transaction: TransactionEntity)

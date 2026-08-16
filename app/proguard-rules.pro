@@ -14,8 +14,7 @@
 #-renamesourcefileattribute SourceFile
 
 # SQLCipher rules
--keep class net.sqlcipher.** { *; }
--keep class net.sqlcipher.database.** { *; }
+-keep class net.zetetic.** { *; }
 
 # Room rules
 -keepclassmembers class * extends androidx.room.RoomDatabase {

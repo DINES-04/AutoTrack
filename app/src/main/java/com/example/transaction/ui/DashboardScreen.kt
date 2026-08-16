@@ -1,5 +1,6 @@
 package com.example.transaction.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -32,6 +33,32 @@ fun DashboardScreen(viewModel: MainViewModel, onNavigateToHistory: () -> Unit) {
     val remainingBudget by viewModel.remainingBudget.collectAsState(initial = 0.0)
     val settings by viewModel.settings.collectAsState(initial = null)
     val transactions by viewModel.dashTransactions.collectAsState(initial = emptyList())
+
+    var showEditDialog by remember { mutableStateOf(false) }
+    var transactionToEdit by remember { mutableStateOf<TransactionEntity?>(null) }
+
+    if (showEditDialog && transactionToEdit != null) {
+        EditTransactionDialog(
+            transaction = transactionToEdit!!,
+            onDismiss = {
+                showEditDialog = false
+                transactionToEdit = null
+            },
+            onConfirm = { updatedTransaction, renameAll ->
+                if (renameAll) {
+                    viewModel.renameAllTransactions(
+                        transactionToEdit!!.merchant,
+                        updatedTransaction.merchant,
+                        updatedTransaction.category
+                    )
+                } else {
+                    viewModel.updateTransaction(updatedTransaction)
+                }
+                showEditDialog = false
+                transactionToEdit = null
+            }
+        )
+    }
 
     val monthName = remember(selectedMonth) { 
         java.text.DateFormatSymbols().months[selectedMonth - 1]
@@ -144,7 +171,57 @@ fun DashboardScreen(viewModel: MainViewModel, onNavigateToHistory: () -> Unit) {
             }
         } else {
             items(transactions.take(10)) { transaction ->
-                TransactionItem(transaction = transaction)
+                val dismissState = rememberSwipeToDismissBoxState()
+
+                if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) {
+                    LaunchedEffect(transaction) {
+                        transactionToEdit = transaction
+                        showEditDialog = true
+                        dismissState.reset()
+                    }
+                }
+                
+                if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                    LaunchedEffect(transaction) {
+                        viewModel.deleteTransaction(transaction)
+                        dismissState.reset()
+                    }
+                }
+
+                SwipeToDismissBox(
+                    state = dismissState,
+                    backgroundContent = {
+                        val color = when (dismissState.dismissDirection) {
+                            SwipeToDismissBoxValue.EndToStart -> Color.Red.copy(alpha = 0.8f)
+                            SwipeToDismissBoxValue.StartToEnd -> Color.Blue.copy(alpha = 0.8f)
+                            else -> Color.Transparent
+                        }
+                        val alignment = when (dismissState.dismissDirection) {
+                            SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
+                            SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                            else -> Alignment.Center
+                        }
+                        val icon = when (dismissState.dismissDirection) {
+                            SwipeToDismissBoxValue.EndToStart -> Icons.Default.Delete
+                            SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Edit
+                            else -> null
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(color)
+                                .padding(horizontal = 20.dp),
+                            contentAlignment = alignment
+                        ) {
+                            if (icon != null) {
+                                Icon(icon, contentDescription = null, tint = Color.White)
+                            }
+                        }
+                    }
+                ) {
+                    TransactionItem(transaction = transaction)
+                }
             }
             item {
                 if (transactions.size > 10) {

@@ -26,6 +26,9 @@ class TransactionRepository(
     suspend fun insertTransaction(transaction: TransactionEntity) =
         transactionDao.insertTransaction(transaction)
 
+    suspend fun renameAllTransactions(oldMerchant: String, newMerchant: String, newCategory: String) =
+        transactionDao.renameAllTransactions(oldMerchant, newMerchant, newCategory)
+
     suspend fun insertAccount(account: Account) =
         accountDao.insertAccount(account)
 

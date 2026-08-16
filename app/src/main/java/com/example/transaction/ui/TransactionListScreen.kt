@@ -30,6 +30,32 @@ fun TransactionListScreen(viewModel: MainViewModel) {
     val selectedAccountId by viewModel.histAccountId.collectAsState()
     val selectedMonth by viewModel.histMonth.collectAsState()
     val selectedYear by viewModel.histYear.collectAsState()
+
+    var showEditDialog by remember { mutableStateOf(false) }
+    var transactionToEdit by remember { mutableStateOf<TransactionEntity?>(null) }
+
+    if (showEditDialog && transactionToEdit != null) {
+        EditTransactionDialog(
+            transaction = transactionToEdit!!,
+            onDismiss = {
+                showEditDialog = false
+                transactionToEdit = null
+            },
+            onConfirm = { updatedTransaction, renameAll ->
+                if (renameAll) {
+                    viewModel.renameAllTransactions(
+                        transactionToEdit!!.merchant,
+                        updatedTransaction.merchant,
+                        updatedTransaction.category
+                    )
+                } else {
+                    viewModel.updateTransaction(updatedTransaction)
+                }
+                showEditDialog = false
+                transactionToEdit = null
+            }
+        )
+    }
     
     val groupedTransactions = remember(transactions) {
         transactions.groupBy { 
@@ -112,6 +138,14 @@ fun TransactionListScreen(viewModel: MainViewModel) {
                         if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
                             LaunchedEffect(transaction) {
                                 viewModel.deleteTransaction(transaction)
+                                dismissState.reset()
+                            }
+                        }
+
+                        if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) {
+                            LaunchedEffect(transaction) {
+                                transactionToEdit = transaction
+                                showEditDialog = true
                                 dismissState.reset()
                             }
                         }

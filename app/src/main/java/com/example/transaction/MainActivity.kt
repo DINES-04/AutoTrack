@@ -8,25 +8,39 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import com.example.transaction.sms.SmsSyncManager
 import com.example.transaction.ui.MainScreen
 import com.example.transaction.ui.theme.TransactionTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
-    ) { _ ->
-        // Permissions handled
+    ) { permissions ->
+        if (permissions[Manifest.permission.READ_SMS] == true) {
+            syncMessages()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         checkAndRequestPermissions()
+        syncMessages()
 
         enableEdgeToEdge()
         setContent {
             TransactionTheme {
                 MainScreen()
+            }
+        }
+    }
+
+    private fun syncMessages() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED) {
+            lifecycleScope.launch {
+                SmsSyncManager(this@MainActivity).syncMissedSms()
             }
         }
     }

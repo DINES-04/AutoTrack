@@ -17,6 +17,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        packaging {
+            jniLibs {
+                useLegacyPackaging = false
+            }
+        }
     }
 
     buildTypes {

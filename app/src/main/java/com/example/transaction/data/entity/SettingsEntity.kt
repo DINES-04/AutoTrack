@@ -7,5 +7,6 @@ import androidx.room.PrimaryKey
 data class SettingsEntity(
     @PrimaryKey val id: Int = 0, // Single row for settings
     val monthlyBudget: Double = 0.0,
-    val currency: String = "₹"
+    val currency: String = "₹",
+    val lastSyncTime: Long = 0L // Stores the timestamp of the last processed SMS
 )
