@@ -10,7 +10,11 @@ In a world of digital payments, keeping track of every expense manually is tedio
 - **Visual Insights**: Providing professional-grade analytics to help users understand their "Financial Health" at a glance.
 
 ---
+## ⏮️ Preview
+<img width="1026" height="575" alt="Screenshot 2026-05-02 111428" src="https://github.com/user-attachments/assets/8b82b0b8-b47c-45ac-bdf0-aa9f14dab1a8" />
+<img width="1312" height="603" alt="Screenshot 2026-05-02 112311" src="https://github.com/user-attachments/assets/b78c6e0a-d7fa-4314-8c75-1813c30aee2a" />
 
+---
 ## ✨ Key Features
 
 ### 📊 1. Professional Dashboard
