@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.transaction.classifier.MerchantClassifier
 import java.util.*
 
 @Composable
@@ -166,13 +167,23 @@ fun AnalyticsItem(label: String, amount: Double, total: Double, color: Color) {
 }
 
 fun getCategoryColor(category: String): Color {
-    return when (category.lowercase()) {
-        "food" -> Color(0xFFFF9800)
-        "shopping" -> Color(0xFFE91E63)
-        "travel" -> Color(0xFF03A9F4)
-        "bills" -> Color(0xFF673AB7)
-        "others" -> Color(0xFF9E9E9E)
-        "manual" -> Color(0xFF4CAF50)
+    return when (category) {
+        MerchantClassifier.SHOPPING -> Color(0xFFE91E63)
+        MerchantClassifier.FOOD_DINING -> Color(0xFFFF9800)
+        MerchantClassifier.TRAVEL_TRANSPORT -> Color(0xFF03A9F4)
+        MerchantClassifier.FUEL -> Color(0xFFFFC107)
+        MerchantClassifier.BILLS_UTILITIES -> Color(0xFF673AB7)
+        MerchantClassifier.ENTERTAINMENT -> Color(0xFF9C27B0)
+        MerchantClassifier.HEALTH -> Color(0xFFF44336)
+        MerchantClassifier.EDUCATION -> Color(0xFF3F51B5)
+        MerchantClassifier.INVESTMENT -> Color(0xFF4CAF50)
+        MerchantClassifier.BANKING_FINANCE -> Color(0xFF607D8B)
+        MerchantClassifier.TRANSFER -> Color(0xFF00BCD4)
+        MerchantClassifier.INCOME -> Color(0xFF4CAF50)
+        MerchantClassifier.INSURANCE -> Color(0xFF009688)
+        MerchantClassifier.SUBSCRIPTION -> Color(0xFF795548)
+        MerchantClassifier.OTHER -> Color(0xFF9E9E9E)
+        "Manual" -> Color(0xFF8BC34A)
         else -> Color(0xFF607D8B)
     }
 }

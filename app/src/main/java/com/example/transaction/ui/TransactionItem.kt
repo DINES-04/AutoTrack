@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.transaction.data.entity.TransactionEntity
+import com.example.transaction.classifier.MerchantClassifier
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -129,13 +130,23 @@ fun EditTransactionDialog(
 }
 
 fun getCategoryIcon(category: String): ImageVector {
-    return when (category.lowercase()) {
-        "food" -> Icons.Default.Restaurant
-        "shopping" -> Icons.Default.ShoppingBag
-        "travel" -> Icons.Default.DirectionsCar
-        "bills" -> Icons.Default.Receipt
-        "others" -> Icons.Default.Category
-        "manual" -> Icons.Default.Edit
+    return when (category) {
+        MerchantClassifier.SHOPPING -> Icons.Default.ShoppingBag
+        MerchantClassifier.FOOD_DINING -> Icons.Default.Restaurant
+        MerchantClassifier.TRAVEL_TRANSPORT -> Icons.Default.DirectionsCar
+        MerchantClassifier.FUEL -> Icons.Default.LocalGasStation
+        MerchantClassifier.BILLS_UTILITIES -> Icons.Default.Receipt
+        MerchantClassifier.ENTERTAINMENT -> Icons.Default.Movie
+        MerchantClassifier.HEALTH -> Icons.Default.MedicalServices
+        MerchantClassifier.EDUCATION -> Icons.Default.School
+        MerchantClassifier.INVESTMENT -> Icons.Default.TrendingUp
+        MerchantClassifier.BANKING_FINANCE -> Icons.Default.AccountBalance
+        MerchantClassifier.TRANSFER -> Icons.Default.SyncAlt
+        MerchantClassifier.INCOME -> Icons.Default.Payments
+        MerchantClassifier.INSURANCE -> Icons.Default.Security
+        MerchantClassifier.SUBSCRIPTION -> Icons.Default.Subscriptions
+        MerchantClassifier.OTHER -> Icons.Default.Category
+        "Manual" -> Icons.Default.Edit
         else -> Icons.Default.Payment
     }
 }

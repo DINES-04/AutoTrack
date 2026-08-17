@@ -1,9 +1,11 @@
 package com.example.transaction.data
 
 import com.example.transaction.data.dao.AccountDao
+import com.example.transaction.data.dao.MerchantMappingDao
 import com.example.transaction.data.dao.SettingsDao
 import com.example.transaction.data.dao.TransactionDao
 import com.example.transaction.data.entity.Account
+import com.example.transaction.data.entity.MerchantMapping
 import com.example.transaction.data.entity.SettingsEntity
 import com.example.transaction.data.entity.TransactionEntity
 import kotlinx.coroutines.flow.Flow
@@ -11,11 +13,13 @@ import kotlinx.coroutines.flow.Flow
 class TransactionRepository(
     private val accountDao: AccountDao,
     private val transactionDao: TransactionDao,
-    private val settingsDao: SettingsDao
+    private val settingsDao: SettingsDao,
+    private val merchantMappingDao: MerchantMappingDao
 ) {
     val allAccounts: Flow<List<Account>> = accountDao.getAllAccounts()
     val allTransactions: Flow<List<TransactionEntity>> = transactionDao.getAllTransactions()
     val settings: Flow<SettingsEntity?> = settingsDao.getSettings()
+    val allMerchantMappings: Flow<List<MerchantMapping>> = merchantMappingDao.getAllMappings()
 
     fun getTransactionsByMonth(month: Int, year: Int) = 
         transactionDao.getTransactionsByMonth(month, year)
@@ -52,4 +56,14 @@ class TransactionRepository(
 
     suspend fun deleteTransaction(transaction: TransactionEntity) =
         transactionDao.deleteTransaction(transaction)
+
+    // Merchant Mapping methods
+    suspend fun getMappingForMerchant(merchantName: String) =
+        merchantMappingDao.getMappingForMerchant(merchantName.lowercase().trim())
+
+    suspend fun insertMerchantMapping(mapping: MerchantMapping) =
+        merchantMappingDao.insertMapping(mapping.copy(merchantName = mapping.merchantName.lowercase().trim()))
+
+    suspend fun deleteMerchantMapping(merchantName: String) =
+        merchantMappingDao.deleteMapping(merchantName.lowercase().trim())
 }

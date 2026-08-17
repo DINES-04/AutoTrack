@@ -87,12 +87,20 @@ class SmsReceiver : BroadcastReceiver() {
             Log.d("SmsReceiver", "Matched account: ${matchingAccount.name}")
             val parsed = SmsParser.parse(body)
             if (parsed != null) {
+                // Check for manual user override
+                val userMapping = db.merchantMappingDao().getMappingForMerchant(parsed.merchant.lowercase().trim())
+                val finalCategory = userMapping?.category ?: parsed.category
+                
+                if (userMapping != null) {
+                    Log.d("Classifier", "Merchant: ${parsed.merchant}, Category: $finalCategory, Method: user_override")
+                }
+
                 val calendar = Calendar.getInstance().apply { timeInMillis = timestamp }
                 val transaction = TransactionEntity(
                     amount = parsed.amount,
                     type = parsed.type,
                     merchant = parsed.merchant,
-                    category = parsed.category,
+                    category = finalCategory,
                     accountId = matchingAccount.id,
                     date = timestamp,
                     month = calendar.get(Calendar.MONTH) + 1,

@@ -89,16 +89,16 @@ class SmsSyncManager(private val context: Context) {
         if (matchingAccount != null) {
             val parsed = SmsParser.parse(body)
             if (parsed != null) {
-                // Check if this transaction already exists (optional but good for de-duplication)
-                // For now, we rely on the timestamp being after lastSync, but a more robust check 
-                // would be a unique constraint or checking amount/merchant/time.
-                
+                // Check for manual user override
+                val userMapping = db.merchantMappingDao().getMappingForMerchant(parsed.merchant.lowercase().trim())
+                val finalCategory = userMapping?.category ?: parsed.category
+
                 val calendar = Calendar.getInstance().apply { timeInMillis = date }
                 val transaction = TransactionEntity(
                     amount = parsed.amount,
                     type = parsed.type,
                     merchant = parsed.merchant,
-                    category = parsed.category,
+                    category = finalCategory,
                     accountId = matchingAccount.id,
                     date = date,
                     month = calendar.get(Calendar.MONTH) + 1,

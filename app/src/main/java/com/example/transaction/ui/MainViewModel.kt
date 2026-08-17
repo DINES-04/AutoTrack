@@ -37,7 +37,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         val db = AppDatabase.getDatabase(application)
-        repository = TransactionRepository(db.accountDao(), db.transactionDao(), db.settingsDao())
+        repository = TransactionRepository(db.accountDao(), db.transactionDao(), db.settingsDao(), db.merchantMappingDao())
         allAccounts = repository.allAccounts
         settings = repository.settings
     }
@@ -165,6 +165,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun renameAllTransactions(oldMerchant: String, newMerchant: String, newCategory: String) {
         viewModelScope.launch {
             repository.renameAllTransactions(oldMerchant, newMerchant, newCategory)
+            repository.insertMerchantMapping(com.example.transaction.data.entity.MerchantMapping(newMerchant, newCategory, true))
+            if (oldMerchant.lowercase() != newMerchant.lowercase()) {
+                repository.insertMerchantMapping(com.example.transaction.data.entity.MerchantMapping(oldMerchant, newCategory, true))
+            }
         }
     }
 

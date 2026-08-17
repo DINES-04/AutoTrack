@@ -16,11 +16,13 @@ import com.example.transaction.data.entity.Account
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Dashboard : Screen("dashboard", "Dashboard", Icons.Default.Dashboard)
     object Transactions : Screen("transactions", "History", Icons.Default.History)
+    object Category : Screen("category", "Category", Icons.Default.Category)
     object Analytics : Screen("analytics", "Analytics", Icons.Default.BarChart)
     object Accounts : Screen("accounts", "Accounts", Icons.Default.AccountBalance)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val viewModel: MainViewModel = viewModel()
@@ -47,12 +49,24 @@ fun MainScreen() {
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(currentScreen.title) },
+                actions = {
+                    if (currentScreen != Screen.Analytics) {
+                        IconButton(onClick = { currentScreen = Screen.Analytics }) {
+                            Icon(Icons.Default.BarChart, contentDescription = "Analytics")
+                        }
+                    }
+                }
+            )
+        },
         bottomBar = {
             NavigationBar {
                 val items = listOf(
                     Screen.Dashboard,
                     Screen.Transactions,
-                    Screen.Analytics,
+                    Screen.Category,
                     Screen.Accounts,
                     Screen.Settings
                 )
@@ -78,6 +92,7 @@ fun MainScreen() {
             when (currentScreen) {
                 Screen.Dashboard -> DashboardScreen(viewModel, onNavigateToHistory = { currentScreen = Screen.Transactions })
                 Screen.Transactions -> TransactionListScreen(viewModel)
+                Screen.Category -> CategoryScreen(viewModel)
                 Screen.Analytics -> AnalyticsScreen(viewModel)
                 Screen.Accounts -> AccountManagementScreen(viewModel)
                 Screen.Settings -> SettingsScreen(viewModel)
