@@ -29,5 +29,6 @@ data class TransactionEntity(
     val accountId: Long,
     val date: Long, // Timestamp
     val month: Int, // 1-12
-    val year: Int
+    val year: Int,
+    val note: String = ""
 )

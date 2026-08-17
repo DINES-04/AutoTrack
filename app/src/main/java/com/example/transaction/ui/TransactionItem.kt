@@ -81,6 +81,7 @@ fun EditTransactionDialog(
 ) {
     var merchant by remember { mutableStateOf(transaction.merchant) }
     var category by remember { mutableStateOf(transaction.category) }
+    var note by remember { mutableStateOf(transaction.note) }
     var renameAll by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -100,6 +101,12 @@ fun EditTransactionDialog(
                     label = { Text("Category") },
                     modifier = Modifier.fillMaxWidth()
                 )
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Note") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -115,7 +122,7 @@ fun EditTransactionDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    onConfirm(transaction.copy(merchant = merchant, category = category), renameAll)
+                    onConfirm(transaction.copy(merchant = merchant, category = category, note = note), renameAll)
                 }
             ) {
                 Text("Save")

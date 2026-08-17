@@ -18,6 +18,9 @@ interface TransactionDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTransaction(transaction: TransactionEntity)
 
+    @Update
+    suspend fun updateTransaction(transaction: TransactionEntity)
+
     @Query("UPDATE transactions SET merchant = :newMerchant, category = :newCategory WHERE merchant = :oldMerchant")
     suspend fun renameAllTransactions(oldMerchant: String, newMerchant: String, newCategory: String)
 

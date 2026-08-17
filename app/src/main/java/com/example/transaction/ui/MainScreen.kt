@@ -105,8 +105,8 @@ fun MainScreen() {
         AddTransactionDialog(
             accounts = accounts,
             onDismiss = { showAddTransactionDialog = false },
-            onSave = { amount, type, merchant, accountId, category ->
-                viewModel.addTransaction(amount, type, merchant, accountId, category)
+            onSave = { amount, type, merchant, accountId, category, note ->
+                viewModel.addTransaction(amount, type, merchant, accountId, category, note)
                 showAddTransactionDialog = false
             }
         )
@@ -117,10 +117,11 @@ fun MainScreen() {
 fun AddTransactionDialog(
     accounts: List<Account>,
     onDismiss: () -> Unit,
-    onSave: (Double, String, String, Long, String) -> Unit
+    onSave: (Double, String, String, Long, String, String) -> Unit
 ) {
     var amount by remember { mutableStateOf("") }
     var merchant by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
     var type by remember { mutableStateOf("DEBIT") }
     var category by remember { mutableStateOf("Manual") }
     var selectedAccountId by remember { mutableStateOf<Long?>(null) }
@@ -142,6 +143,12 @@ fun AddTransactionDialog(
                     value = merchant,
                     onValueChange = { merchant = it },
                     label = { Text("Merchant / Description") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Note") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 
@@ -179,7 +186,7 @@ fun AddTransactionDialog(
                 onClick = {
                     val amt = amount.toDoubleOrNull()
                     if (amt != null && selectedAccountId != null && merchant.isNotBlank()) {
-                        onSave(amt, type, merchant, selectedAccountId!!, category)
+                        onSave(amt, type, merchant, selectedAccountId!!, category, note)
                     }
                 },
                 enabled = amount.isNotBlank() && selectedAccountId != null && merchant.isNotBlank()

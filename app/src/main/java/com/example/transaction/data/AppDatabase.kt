@@ -16,7 +16,7 @@ import com.example.transaction.data.entity.MerchantMapping
 import com.example.transaction.data.entity.SettingsEntity
 import com.example.transaction.data.entity.TransactionEntity
 
-@Database(entities = [Account::class, TransactionEntity::class, SettingsEntity::class, MerchantMapping::class], version = 4, exportSchema = false)
+@Database(entities = [Account::class, TransactionEntity::class, SettingsEntity::class, MerchantMapping::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun accountDao(): AccountDao
     abstract fun transactionDao(): TransactionDao
@@ -33,6 +33,12 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `transactions` ADD COLUMN `note` TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 // To keep it simple but secure, we use a fixed passphrase for encryption.
@@ -45,7 +51,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "transaction_db",
                 )
                 .openHelperFactory(factory)
-                .addMigrations(MIGRATION_3_4)
+                .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

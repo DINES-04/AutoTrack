@@ -132,7 +132,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { repository.deleteAccount(account) }
     }
 
-    fun addTransaction(amount: Double, type: String, merchant: String, accountId: Long, category: String = "Others") {
+    fun addTransaction(amount: Double, type: String, merchant: String, accountId: Long, category: String = "Others", note: String = "") {
         viewModelScope.launch {
             val calendar = Calendar.getInstance()
             repository.insertTransaction(
@@ -144,7 +144,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     accountId = accountId,
                     date = System.currentTimeMillis(),
                     month = calendar.get(Calendar.MONTH) + 1,
-                    year = calendar.get(Calendar.YEAR)
+                    year = calendar.get(Calendar.YEAR),
+                    note = note
                 )
             )
         }
@@ -158,7 +159,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 month = cal.get(Calendar.MONTH) + 1,
                 year = cal.get(Calendar.YEAR)
             )
-            repository.insertTransaction(updated)
+            repository.updateTransaction(updated)
         }
     }
 
