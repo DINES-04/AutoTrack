@@ -75,6 +75,7 @@ dependencies {
     // Security - SQLCipher for Database Encryption
     implementation(libs.sqlcipher)
     implementation(libs.sqlite.ktx)
+    implementation(libs.androidx.security.crypto)
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

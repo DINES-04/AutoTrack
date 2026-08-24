@@ -15,6 +15,7 @@ import com.example.transaction.data.entity.Account
 import com.example.transaction.data.entity.MerchantMapping
 import com.example.transaction.data.entity.SettingsEntity
 import com.example.transaction.data.entity.TransactionEntity
+import com.example.transaction.security.DatabaseKeyManager
 
 @Database(entities = [Account::class, TransactionEntity::class, SettingsEntity::class, MerchantMapping::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
@@ -41,8 +42,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
-                // To keep it simple but secure, we use a fixed passphrase for encryption.
-                val passphrase = "TransactionSecureKey123".toByteArray()
+                val passphrase = DatabaseKeyManager.getDatabasePassphrase(context)
                 val factory = SupportOpenHelperFactory(passphrase)
 
                 val instance = Room.databaseBuilder(
@@ -52,7 +52,6 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                 .openHelperFactory(factory)
                 .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
-                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance
