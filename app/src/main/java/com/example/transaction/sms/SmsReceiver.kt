@@ -104,7 +104,8 @@ class SmsReceiver : BroadcastReceiver() {
                     accountId = matchingAccount.id,
                     date = timestamp,
                     month = calendar.get(Calendar.MONTH) + 1,
-                    year = calendar.get(Calendar.YEAR)
+                    year = calendar.get(Calendar.YEAR),
+                    note = parsed.bank ?: ""
                 )
                 db.transactionDao().insertTransaction(transaction)
                 Log.d("SmsReceiver", "SUCCESS: Transaction saved: ${parsed.amount} ${parsed.type} at ${parsed.merchant}")

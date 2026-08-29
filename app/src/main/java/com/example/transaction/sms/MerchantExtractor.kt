@@ -11,7 +11,8 @@ object MerchantExtractor {
         "utr", "upi", "vpa", "date", "time", "balance", "account", "a/c", "masked",
         "mobile", "otp", "code", "successful", "pending", "failed", "reversed",
         "towards", "for", "on", "at", "by", "to", "from", "via", "using", "your",
-        "dear", "customer", "with", "has", "been", "limit", "available", "spent", "paid"
+        "dear", "customer", "with", "has", "been", "limit", "available", "spent", "paid",
+        "rrn", "lite"
     )
 
     fun extract(message: String): String {
@@ -25,21 +26,23 @@ object MerchantExtractor {
         }
 
         // 2. Structured Extraction Pipeline
-        // Priority order for separators. "by" is usually the most reliable for merchants.
-        val candidateSeparators = listOf(" by ", " at ", " on ", " to ", " from ")
+        val candidateSeparators = listOf(" by ", " at ", " on ", " to ", " from ", " for ")
         var bestCandidate = ""
 
         for (sep in candidateSeparators) {
             val parts = cleanMsg.split(Regex(sep, RegexOption.IGNORE_CASE))
             if (parts.size > 1) {
-                // Check all occurrences, usually the last one is more specific in bank SMS
                 for (i in parts.size - 1 downTo 1) {
                     val candidateRaw = parts[i].trim()
                     val candidate = extractFirstLegitWords(candidateRaw)
-                    if (candidate.isNotEmpty() && !isTechnicalNoise(candidate) && !isAccountOrDate(candidate)) {
-                        // If it's "on", verify it's not a date
+                    
+                    if (candidate.isNotEmpty() && !isAccountOrDate(candidate)) {
+                        // Special check for "on" - often marks date OR platform
                         if (sep == " on " && isDateLike(candidate)) continue
                         
+                        // If the candidate is just "bank", it's likely a bank identifier at the end, ignore it
+                        if (candidate.equals("bank", ignoreCase = true) || isBankAtEnd(candidateRaw)) continue
+
                         bestCandidate = candidate
                         break
                     }
@@ -62,8 +65,13 @@ object MerchantExtractor {
         for (word in words) {
             val cleanWord = word.trim().replace(Regex("[^a-zA-Z0-9.\\-&]"), "")
             
-            if (cleanWord.isEmpty() || isTechnicalNoise(cleanWord) || isNumericOrRef(cleanWord)) {
+            if (cleanWord.isEmpty() || isNumericOrRef(cleanWord)) {
                 if (merchantWords.isEmpty()) continue else break
+            }
+            
+            // If it's a pure separator or noise word that ends the merchant name
+            if (isPureSeparator(cleanWord)) {
+                break
             }
             
             if (isAccountOrDate(cleanWord) && !isVpaCandidate(cleanWord)) {
@@ -77,9 +85,9 @@ object MerchantExtractor {
         return merchantWords.joinToString(" ").trim()
     }
 
-    private fun isTechnicalNoise(word: String): Boolean {
-        val normalized = word.lowercase().replace(Regex("[^a-z]"), "")
-        return technicalKeywords.contains(normalized)
+    private fun isPureSeparator(word: String): Boolean {
+        val normalized = word.lowercase()
+        return listOf("rrn", "ref", "utr", "txn", "not", "sms", "on").contains(normalized)
     }
 
     private fun isNumericOrRef(word: String): Boolean {
@@ -91,13 +99,17 @@ object MerchantExtractor {
         return word.contains("XX", ignoreCase = true) || 
                word.contains("/") || 
                (word.contains("-") && word.any { it.isDigit() }) ||
-               (word.all { it.isDigit() || it == ':' } && word.contains(":")) // Time
+               (word.all { it.isDigit() || it == ':' } && word.contains(":")) ||
+               word.startsWith("*")
     }
 
     private fun isDateLike(candidate: String): Boolean {
-        // Common date formats: 01-01-24, 2024-01-01, 01/01/2024
         val firstWord = candidate.split(" ")[0]
         return isAccountOrDate(firstWord)
+    }
+
+    private fun isBankAtEnd(raw: String): Boolean {
+        return raw.startsWith("-") && raw.lowercase().contains("bank")
     }
     
     private fun isVpaCandidate(word: String): Boolean {
@@ -107,15 +119,15 @@ object MerchantExtractor {
     private fun normalizeMerchant(merchant: String): String {
         var clean = merchant.trim()
             .substringBefore(".")
+            .substringBefore(" RRN")
             .substringBefore(" Ref")
-            .substringBefore(" Ref:")
-            .substringBefore(" Ref No")
+            .substringBefore(" txn")
             .substringBefore(" on ")
             .trim()
             .trim { !it.isLetterOrDigit() && it != '&' }
         
         clean = clean.take(30).trim()
         
-        return if (clean.isEmpty() || isTechnicalNoise(clean)) "Unknown" else clean
+        return if (clean.isEmpty()) "Unknown" else clean
     }
 }
