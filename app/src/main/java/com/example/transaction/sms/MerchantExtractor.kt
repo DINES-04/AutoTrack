@@ -28,7 +28,7 @@ object MerchantExtractor {
         val vpaMatcher = vpaPattern.matcher(cleanMsg)
         if (vpaMatcher.find()) {
             val vpa = vpaMatcher.group(1) ?: ""
-            if (vpa.isNotEmpty()) return normalizeMerchant(vpa)
+            if (vpa.isNotEmpty()) return MerchantNormalizer.normalize(vpa)
         }
 
         // 2. Structured Extraction Pipeline

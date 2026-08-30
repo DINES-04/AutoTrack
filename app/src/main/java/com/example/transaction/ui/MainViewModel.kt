@@ -165,10 +165,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun renameAllTransactions(oldMerchant: String, newMerchant: String, newCategory: String) {
         viewModelScope.launch {
+            val normalizedNew = com.example.transaction.sms.MerchantNormalizer.normalize(newMerchant)
+            val normalizedOld = com.example.transaction.sms.MerchantNormalizer.normalize(oldMerchant)
+            
             repository.renameAllTransactions(oldMerchant, newMerchant, newCategory)
-            repository.insertMerchantMapping(com.example.transaction.data.entity.MerchantMapping(newMerchant, newCategory, true))
-            if (oldMerchant.lowercase() != newMerchant.lowercase()) {
-                repository.insertMerchantMapping(com.example.transaction.data.entity.MerchantMapping(oldMerchant, newCategory, true))
+            repository.insertMerchantMapping(com.example.transaction.data.entity.MerchantMapping(normalizedNew, newCategory, true))
+            if (normalizedOld != normalizedNew) {
+                repository.insertMerchantMapping(com.example.transaction.data.entity.MerchantMapping(normalizedOld, newCategory, true))
             }
         }
     }

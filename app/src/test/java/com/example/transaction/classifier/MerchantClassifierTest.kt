@@ -9,7 +9,7 @@ class MerchantClassifierTest {
     fun testShoppingCategory() {
         val result = MerchantClassifier.classify("Amazon", "Paid Rs 500 to Amazon")
         assertEquals(MerchantClassifier.SHOPPING, result.category)
-        assertEquals("merchant_mapping", result.method)
+        assertEquals("known_merchant", result.method)
     }
 
     @Test

@@ -87,8 +87,9 @@ class SmsReceiver : BroadcastReceiver() {
             Log.d("SmsReceiver", "Matched account: ${matchingAccount.name}")
             val parsed = SmsParser.parse(body)
             if (parsed != null) {
-                // Check for manual user override
-                val userMapping = db.merchantMappingDao().getMappingForMerchant(parsed.merchant.lowercase().trim())
+                // Check for manual user override with normalized merchant name
+                val normalizedMerchant = MerchantNormalizer.normalize(parsed.merchant)
+                val userMapping = db.merchantMappingDao().getMappingForMerchant(normalizedMerchant)
                 val finalCategory = userMapping?.category ?: parsed.category
                 
                 if (userMapping != null) {
