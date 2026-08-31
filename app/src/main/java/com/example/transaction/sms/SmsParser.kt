@@ -20,12 +20,30 @@ object SmsParser {
     private val accountPattern = Pattern.compile("(?i)(?:a/c|acc|account|acct)\\s*(?:no|num)?\\s*[*xX]*(\\d{4,})")
     private val referencePattern = Pattern.compile("(?i)(?:rrn|ref|utr|txn|id)[:\\s]*(\\d{8,})")
     private val phonePattern = Pattern.compile("(?:\\+91|0)?\\d{10}")
+    private val datePattern = Pattern.compile("(?i)(?:on|date)[:\\s]*(\\d{1,2}[-/](?:\\d{1,2}|[a-z]{3,9})[-/]\\d{2,4})")
 
     private val typeDebitPattern = Pattern.compile("(?i)(spent|debited|paid|withdrawal|txn|sent|transfer to|payment to|payment of|used on)")
     private val typeCreditPattern = Pattern.compile("(?i)(credited|received|deposit|added|refunded|transfer from|money received)")
 
     fun parse(message: String): ParsedTransaction? {
-        val amount = extractBestAmount(message) ?: return null
+        val result = parseToResult(message)
+        val amount = result.amount ?: return null
+
+        return ParsedTransaction(
+            amount = amount,
+            type = result.transactionType ?: "DEBIT",
+            merchant = result.merchant ?: "Unknown",
+            category = result.category ?: MerchantClassifier.OTHER,
+            bank = result.bank
+        )
+    }
+
+    /**
+     * Parses an SMS message into a structured [TransactionExtractionResult].
+     * This is the foundation for the offline transaction intelligence layer.
+     */
+    fun parseToResult(message: String): TransactionExtractionResult {
+        val amount = extractBestAmount(message)
 
         val isDebit = typeDebitPattern.matcher(message).find()
         val isCredit = typeCreditPattern.matcher(message).find()
@@ -36,10 +54,12 @@ object SmsParser {
             isCredit && !isDebit -> "CREDIT"
             isDebit && !isCredit -> "DEBIT"
             isCredit && isDebit -> {
-                val amountIndex = message.indexOf(amount.toString())
-                val debitIndex = message.lowercase().lastIndexOf("debited", amountIndex)
-                val creditIndex = message.lowercase().lastIndexOf("credited", amountIndex)
-                if (debitIndex > creditIndex) "DEBIT" else "CREDIT"
+                val amountIndex = amount?.let { message.indexOf(it.toString()) } ?: -1
+                if (amountIndex != -1) {
+                    val debitIndex = message.lowercase().lastIndexOf("debited", amountIndex)
+                    val creditIndex = message.lowercase().lastIndexOf("credited", amountIndex)
+                    if (debitIndex > creditIndex) "DEBIT" else "CREDIT"
+                } else "DEBIT"
             }
             message.contains(" to ", ignoreCase = true) -> "DEBIT"
             message.contains(" from ", ignoreCase = true) -> "CREDIT"
@@ -49,13 +69,52 @@ object SmsParser {
         val merchant = MerchantExtractor.extract(message)
         val classification = MerchantClassifier.classify(merchant, message)
         val bank = extractBank(message)
+        
+        val accountMatcher = accountPattern.matcher(message)
+        val account = if (accountMatcher.find()) accountMatcher.group(1) else null
+        
+        val refMatcher = referencePattern.matcher(message)
+        val reference = if (refMatcher.find()) refMatcher.group(1) else null
+        
+        val dateMatcher = datePattern.matcher(message)
+        val extractedDate = if (dateMatcher.find()) dateMatcher.group(1) else null
 
-        return ParsedTransaction(
+        return TransactionExtractionResult(
             amount = amount,
-            type = type,
-            merchant = merchant,
+            amountConfidence = if (amount != null) 0.98 else 0.0,
+            amountMethod = if (amount != null) ExtractionMethod.REGEX else ExtractionMethod.NONE,
+            
+            merchant = if (merchant != "Unknown") merchant else null,
+            merchantConfidence = if (merchant != "Unknown") 0.90 else 0.0,
+            merchantMethod = if (merchant != "Unknown") ExtractionMethod.MERCHANT_EXTRACTOR else ExtractionMethod.NONE,
+            
+            transactionType = type,
+            transactionTypeConfidence = 0.95,
+            transactionTypeMethod = ExtractionMethod.CONTEXT_RULE,
+            
+            bank = bank,
+            bankConfidence = if (bank != null) 0.90 else 0.0,
+            bankMethod = if (bank != null) ExtractionMethod.REGEX else ExtractionMethod.NONE,
+            
+            accountIdentifier = account,
+            accountIdentifierConfidence = if (account != null) 0.95 else 0.0,
+            accountIdentifierMethod = if (account != null) ExtractionMethod.REGEX else ExtractionMethod.NONE,
+            
+            referenceNumber = reference,
+            referenceNumberConfidence = if (reference != null) 0.95 else 0.0,
+            referenceNumberMethod = if (reference != null) ExtractionMethod.REGEX else ExtractionMethod.NONE,
+            
+            timestamp = null, // In this phase, we don't convert extractedDate to timestamp here
+            timestampConfidence = if (extractedDate != null) 0.80 else 0.0,
+            timestampMethod = if (extractedDate != null) ExtractionMethod.REGEX else ExtractionMethod.NONE,
+            
             category = classification.category,
-            bank = bank
+            categoryConfidence = classification.confidence,
+            categoryMethod = when (classification.method) {
+                "known_merchant" -> ExtractionMethod.KNOWN_MERCHANT
+                "keyword_classifier" -> ExtractionMethod.KEYWORD_CLASSIFIER
+                else -> ExtractionMethod.NONE
+            }
         )
     }
 
