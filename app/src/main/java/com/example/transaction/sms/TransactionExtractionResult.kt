@@ -4,29 +4,22 @@ package com.example.transaction.sms
  * Represents the method used to extract or classify a specific field.
  */
 enum class ExtractionMethod {
-    /** Extracted using regular expression patterns. */
     REGEX,
-    
-    /** Extracted based on surrounding context rules. */
     CONTEXT_RULE,
-    
-    /** Extracted by the dedicated merchant extraction logic. */
     MERCHANT_EXTRACTOR,
-    
-    /** Matched against a known list of high-confidence merchants. */
     KNOWN_MERCHANT,
-    
-    /** Classified based on keyword matching. */
     KEYWORD_CLASSIFIER,
-    
-    /** Overridden by a user-defined mapping. */
     USER_MAPPING,
-    
-    /** Extracted by a local machine learning model (Future Use). */
     LOCAL_MODEL,
-    
-    /** No extraction method applied. */
     NONE
+}
+
+/**
+ * Represents the decision for secondary inference (e.g., calling an ML model).
+ */
+enum class InferenceDecision {
+    NO_SECONDARY_INFERENCE_REQUIRED,
+    SECONDARY_INFERENCE_REQUIRED
 }
 
 /**
@@ -65,4 +58,61 @@ data class TransactionExtractionResult(
     val category: String? = null,
     val categoryConfidence: Double = 0.0,
     val categoryMethod: ExtractionMethod = ExtractionMethod.NONE
-)
+) {
+    /**
+     * Evaluates field-level confidence for critical transaction fields.
+     */
+    fun getFieldConfidence(fieldName: String): FieldConfidence {
+        val score = when (fieldName.lowercase()) {
+            "amount" -> amountConfidence
+            "merchant" -> merchantConfidence
+            "type", "transactiontype" -> transactionTypeConfidence
+            "bank" -> bankConfidence
+            "category" -> categoryConfidence
+            "account" -> accountIdentifierConfidence
+            "reference" -> referenceNumberConfidence
+            "timestamp" -> timestampConfidence
+            else -> 0.0
+        }
+        val method = when (fieldName.lowercase()) {
+            "amount" -> amountMethod
+            "merchant" -> merchantMethod
+            "type", "transactiontype" -> transactionTypeMethod
+            "bank" -> bankMethod
+            "category" -> categoryMethod
+            "account" -> accountIdentifierMethod
+            "reference" -> referenceNumberMethod
+            "timestamp" -> timestampMethod
+            else -> ExtractionMethod.NONE
+        }
+
+        return FieldConfidence(
+            score = score,
+            level = ConfidenceThresholds.getLevel(score),
+            method = method,
+            requiresSecondaryInference = ConfidenceThresholds.requiresInference(score)
+        )
+    }
+
+    /**
+     * Determines if the overall extraction result or specific critical fields require secondary inference.
+     */
+    fun getOverallInferenceDecision(): InferenceDecision {
+        val criticalFields = listOf("amount", "merchant", "type", "category")
+        val needsInference = criticalFields.any { getFieldConfidence(it).requiresSecondaryInference } ||
+                amount == null || merchant == null
+        
+        return if (needsInference) {
+            InferenceDecision.SECONDARY_INFERENCE_REQUIRED
+        } else {
+            InferenceDecision.NO_SECONDARY_INFERENCE_REQUIRED
+        }
+    }
+    
+    /**
+     * Checks if a specific field requires secondary inference.
+     */
+    fun requiresSecondaryInference(fieldName: String): Boolean {
+        return getFieldConfidence(fieldName).requiresSecondaryInference
+    }
+}

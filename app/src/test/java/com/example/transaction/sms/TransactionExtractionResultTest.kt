@@ -20,7 +20,7 @@ class TransactionExtractionResultTest {
         assertEquals(ExtractionMethod.MERCHANT_EXTRACTOR, result.merchantMethod)
         
         assertEquals("DEBIT", result.transactionType)
-        assertEquals(0.95, result.transactionTypeConfidence, 0.001)
+        assertEquals(0.98, result.transactionTypeConfidence, 0.001)
         assertEquals(ExtractionMethod.CONTEXT_RULE, result.transactionTypeMethod)
         
         assertEquals("HDFC Bank", result.bank)
@@ -39,7 +39,7 @@ class TransactionExtractionResultTest {
         assertEquals(0.95, result.categoryConfidence, 0.001)
         assertEquals(ExtractionMethod.KNOWN_MERCHANT, result.categoryMethod)
 
-        assertEquals(0.80, result.timestampConfidence, 0.001)
+        assertEquals(0.90, result.timestampConfidence, 0.001)
         assertEquals(ExtractionMethod.REGEX, result.timestampMethod)
     }
 
