@@ -1,0 +1,44 @@
+=== Phase 1F-6 COMPREHENSIVE BENCHMARK REPORT ===
+Total Samples: 629
+Overall Accuracy: 59.62%
+Total Time: 148 ms
+Avg Latency: 0.24 ms
+Amount False Positive Rate: 0.48%
+
+--- Accuracy by Difficulty ---
+MEDIUM      : 49.67%
+EASY        : 100.00%
+HARD        : 66.37%
+ADVERSARIAL : 0.00%
+
+--- Field-Level Metrics ---
+Field: amount          | Acc: 100.00% | F1: 100.00%
+Field: merchant        | Acc: 60.10% | F1: 74.93%
+Field: transactionType | Acc: 99.36% | F1: 99.68%
+Field: bank            | Acc: 52.31% | F1: 68.42%
+Field: category        | Acc: 0.00% | F1: 0.00%
+
+--- Bank Coverage Accuracy ---
+AU Small Finance Bank    : 42.86%
+Axis Bank                : 42.86%
+Bank of Baroda           : 42.86%
+Canara Bank              : 42.86%
+Federal Bank             : 42.86%
+HDFC Bank                : 42.86%
+ICICI Bank               : 42.86%
+IDFC FIRST Bank          : 42.86%
+Indian Bank              : 85.19%
+IndusInd Bank            : 42.86%
+Kotak Mahindra Bank      : 42.86%
+Punjab National Bank     : 42.86%
+SBI                      : 42.86%
+Union Bank               : 42.86%
+Unknown                  : 100.00%
+Yes Bank                 : 42.86%
+==================================================
+
+Sample Distribution:
+MEDIUM: 151
+EASY: 150
+HARD: 226
+ADVERSARIAL: 102

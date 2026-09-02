@@ -17,32 +17,36 @@ class TransactionBenchmarkTest {
         
         val result = benchmark.run(samples)
         
-        println("=== Phase 1F-6 COMPREHENSIVE BENCHMARK REPORT ===")
-        println("Total Samples: ${result.totalSamples}")
-        println("Overall Accuracy: ${"%.2f".format(result.overallAccuracy * 100)}%")
-        println("Total Time: ${result.totalTimeMs} ms")
-        println("Avg Latency: ${"%.2f".format(result.averageLatencyMs)} ms")
-        println("Amount False Positive Rate: ${"%.2f".format(result.amountFalsePositiveRate * 100)}%")
-        println("\n--- Accuracy by Difficulty ---")
+        val report = StringBuilder()
+        report.append("=== Phase 1F-6 COMPREHENSIVE BENCHMARK REPORT ===\n")
+        report.append("Total Samples: ${result.totalSamples}\n")
+        report.append("Overall Accuracy: ${"%.2f".format(result.overallAccuracy * 100)}%\n")
+        report.append("Total Time: ${result.totalTimeMs} ms\n")
+        report.append("Avg Latency: ${"%.2f".format(result.averageLatencyMs)} ms\n")
+        report.append("Amount False Positive Rate: ${"%.2f".format(result.amountFalsePositiveRate * 100)}%\n")
+        report.append("\n--- Accuracy by Difficulty ---\n")
         result.metricsByDifficulty.forEach { (diff, acc) ->
-            println("${diff.name.padEnd(12)}: ${"%.2f".format(acc * 100)}%")
+            report.append("${diff.name.padEnd(12)}: ${"%.2f".format(acc * 100)}%\n")
         }
         
-        println("\n--- Field-Level Metrics ---")
+        report.append("\n--- Field-Level Metrics ---\n")
         result.fieldMetrics.forEach { 
-            println("Field: ${it.fieldName.padEnd(15)} | Acc: ${"%.2f".format(it.accuracy * 100)}% | F1: ${"%.2f".format(it.f1Score * 100)}%")
+            report.append("Field: ${it.fieldName.padEnd(15)} | Acc: ${"%.2f".format(it.accuracy * 100)}% | F1: ${"%.2f".format(it.f1Score * 100)}%\n")
         }
         
-        println("\n--- Bank Coverage Accuracy ---")
+        report.append("\n--- Bank Coverage Accuracy ---\n")
         result.metricsByBank.toSortedMap().forEach { (bank, acc) ->
-            println("${bank.padEnd(25)}: ${"%.2f".format(acc * 100)}%")
+            report.append("${bank.padEnd(25)}: ${"%.2f".format(acc * 100)}%\n")
         }
-        println("==================================================")
+        report.append("==================================================\n")
         
-        // Distribution checks
         val counts = samples.groupBy { it.difficulty }.mapValues { it.value.size }
-        println("\nSample Distribution:")
-        counts.forEach { (d, c) -> println("${d.name}: $c") }
+        report.append("\nSample Distribution:\n")
+        counts.forEach { (d, c) -> report.append("${d.name}: $c\n") }
+
+        java.io.File("benchmark_report.txt").writeText(report.toString())
+        
+        println(report.toString())
 
         assertTrue("Dataset should have at least 500 samples", samples.size >= 500)
         assertTrue("Should cover all difficulty levels", counts.size == 4)
