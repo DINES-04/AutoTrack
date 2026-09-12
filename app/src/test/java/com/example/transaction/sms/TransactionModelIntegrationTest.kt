@@ -57,7 +57,7 @@ class TransactionModelIntegrationTest {
     @Test
     fun testModelUnavailableFallback() = runBlocking {
         val fakeModel = FakeLocalTransactionModel(status = ModelStatus.UNAVAILABLE)
-        val intelligence = TransactionIntelligence(localModel = fakeModel)
+        val intelligence = TransactionIntelligence(localModel = fakeModel, lazyLoadModel = false)
         
         val sms = "100 debited UNKNOWN_NAME"
         val result = intelligence.process(sms)
@@ -245,9 +245,9 @@ class TransactionModelIntegrationTest {
     }
 
     @Test
-    fun testModelNotCalledIfDisabled() = runBlocking {
+    fun testNotCalledIfDisabled() = runBlocking {
         val fakeModel = FakeLocalTransactionModel(status = ModelStatus.DISABLED)
-        val intelligence = TransactionIntelligence(localModel = fakeModel)
+        val intelligence = TransactionIntelligence(localModel = fakeModel, lazyLoadModel = false)
         
         val sms = "100 debited"
         intelligence.process(sms)
@@ -256,9 +256,9 @@ class TransactionModelIntegrationTest {
     }
 
     @Test
-    fun testModelNotCalledIfLoading() = runBlocking {
+    fun testNotCalledIfLoading() = runBlocking {
         val fakeModel = FakeLocalTransactionModel(status = ModelStatus.LOADING)
-        val intelligence = TransactionIntelligence(localModel = fakeModel)
+        val intelligence = TransactionIntelligence(localModel = fakeModel, lazyLoadModel = false)
         
         val sms = "100 debited"
         intelligence.process(sms)
@@ -267,9 +267,9 @@ class TransactionModelIntegrationTest {
     }
 
     @Test
-    fun testModelNotCalledIfError() = runBlocking {
+    fun testNotCalledIfError() = runBlocking {
         val fakeModel = FakeLocalTransactionModel(status = ModelStatus.ERROR)
-        val intelligence = TransactionIntelligence(localModel = fakeModel)
+        val intelligence = TransactionIntelligence(localModel = fakeModel, lazyLoadModel = false)
         
         val sms = "100 debited"
         intelligence.process(sms)

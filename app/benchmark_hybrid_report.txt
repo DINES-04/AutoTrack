@@ -1,0 +1,18 @@
+=== Phase 1F-8 HYBRID BENCHMARK REPORT ===
+Total Samples: 629
+
+METRIC              | DETERMINISTIC | HYBRID (ML)   | IMPROVEMENT
+--------------------|---------------|---------------|------------
+Overall Accuracy    | 59.62% | 59.62% | +0.00%
+Amount Accuracy     | 100.00% | 100.00% | --
+Merchant Accuracy   | 60.10% | 60.10% | +0.00%
+Bank Accuracy       | 52.31% | 52.31% | +0.00%
+Amount FPR          | 1.12% | 1.12% | --
+
+--- Accuracy by Difficulty (Hybrid) ---
+EASY        : 100.00% (was 100.00%)
+MEDIUM      : 49.67% (was 49.67%)
+HARD        : 66.37% (was 66.37%)
+ADVERSARIAL : 0.00% (was 0.00%)
+
+==================================================

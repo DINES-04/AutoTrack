@@ -8,7 +8,9 @@ import com.example.transaction.data.dao.MerchantMappingDao
  */
 class TransactionIntelligence(
     private val merchantMappingDao: MerchantMappingDao? = null,
-    private val localModel: LocalTransactionModel? = null
+    private val localModel: LocalTransactionModel? = null,
+    private val useMl: Boolean = true, // Feature flag for prototype stage
+    private val lazyLoadModel: Boolean = true // Whether to load model automatically when needed
 ) {
 
     /**
@@ -19,7 +21,7 @@ class TransactionIntelligence(
         var result = SmsParser.parseToResult(message)
 
         // 2. CONFIDENCE CHECK & LOCAL MODEL
-        if (result.getOverallInferenceDecision() == InferenceDecision.SECONDARY_INFERENCE_REQUIRED) {
+        if (useMl && result.getOverallInferenceDecision() == InferenceDecision.SECONDARY_INFERENCE_REQUIRED) {
             result = refineWithLocalModel(message, result)
         }
 
@@ -34,6 +36,12 @@ class TransactionIntelligence(
         result: TransactionExtractionResult
     ): TransactionExtractionResult {
         val model = localModel ?: return result
+        
+        // LAZY LOADING: Load model only if enabled and it hasn't been loaded yet
+        if (lazyLoadModel && (model.status == ModelStatus.DISABLED || model.status == ModelStatus.UNAVAILABLE)) {
+            model.load()
+        }
+
         if (model.status != ModelStatus.AVAILABLE) return result
 
         val targetFields = mutableListOf<String>()
@@ -67,35 +75,42 @@ class TransactionIntelligence(
         // Validation Layer: Only apply model results for fields that were requested or are uncertain
         var updated = result
 
-        modelResult.amount?.let {
+        modelResult.amount?.let { modelAmount ->
             if (result.requiresSecondaryInference("amount") && modelResult.amountConfidence != null) {
-                updated = updated.copy(
-                    amount = it,
-                    amountConfidence = modelResult.amountConfidence,
-                    amountMethod = ExtractionMethod.LOCAL_MODEL
-                )
+                // AMOUNT SAFETY: Validate before applying
+                if (isValidModelAmount(modelAmount, result)) {
+                    updated = updated.copy(
+                        amount = modelAmount,
+                        amountConfidence = modelResult.amountConfidence,
+                        amountMethod = ExtractionMethod.LOCAL_MODEL
+                    )
+                }
             }
         }
 
-        modelResult.merchant?.let {
+        modelResult.merchant?.let { modelMerchant ->
             if (result.requiresSecondaryInference("merchant") && modelResult.merchantConfidence != null) {
-                updated = updated.copy(
-                    merchant = it,
-                    merchantConfidence = modelResult.merchantConfidence,
-                    merchantMethod = ExtractionMethod.LOCAL_MODEL
-                )
-                // If merchant changed, re-classify category deterministically if model didn't provide one
-                if (modelResult.category == null) {
-                    val reClassification = com.example.transaction.classifier.MerchantClassifier.classify(it, result.merchant ?: "")
+                // MERCHANT SAFETY: Clean and validate
+                val cleanedMerchant = cleanMerchantName(modelMerchant)
+                if (isValidModelMerchant(cleanedMerchant)) {
                     updated = updated.copy(
-                        category = reClassification.category,
-                        categoryConfidence = reClassification.confidence,
-                        categoryMethod = when (reClassification.method) {
-                            "known_merchant" -> ExtractionMethod.KNOWN_MERCHANT
-                            "keyword_classifier" -> ExtractionMethod.KEYWORD_CLASSIFIER
-                            else -> ExtractionMethod.NONE
-                        }
+                        merchant = cleanedMerchant,
+                        merchantConfidence = modelResult.merchantConfidence,
+                        merchantMethod = ExtractionMethod.LOCAL_MODEL
                     )
+                    // If merchant changed, re-classify category deterministically if model didn't provide one
+                    if (modelResult.category == null) {
+                        val reClassification = com.example.transaction.classifier.MerchantClassifier.classify(cleanedMerchant, result.merchant ?: "")
+                        updated = updated.copy(
+                            category = reClassification.category,
+                            categoryConfidence = reClassification.confidence,
+                            categoryMethod = when (reClassification.method) {
+                                "known_merchant" -> ExtractionMethod.KNOWN_MERCHANT
+                                "keyword_classifier" -> ExtractionMethod.KEYWORD_CLASSIFIER
+                                else -> ExtractionMethod.NONE
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -131,6 +146,35 @@ class TransactionIntelligence(
         }
 
         return updated
+    }
+
+    private fun isValidModelAmount(amount: Double, current: TransactionExtractionResult): Boolean {
+        // 1. Must be positive
+        if (amount <= 0) return false
+        
+        // 2. Reject if it matches sensitive numeric patterns (Safety Check)
+        val amountStr = amount.toLong().toString()
+        if (amountStr == current.accountIdentifier) return false
+        if (amountStr == current.referenceNumber) return false
+        
+        // 3. Basic sanity check - extreme values
+        if (amount > 10000000) return false 
+        
+        return true
+    }
+
+    private fun cleanMerchantName(name: String): String {
+        return name.split(Regex("(?i) on | at | via | from | to | account | a/c | not you|sms block"))[0]
+            .trim()
+            .removeSuffix(".")
+    }
+
+    private fun isValidModelMerchant(name: String): Boolean {
+        if (name.isBlank()) return false
+        if (name.length < 2) return false
+        // Reject if it looks like a number/ID
+        if (name.matches(Regex("\\d+"))) return false
+        return true
     }
 
     private suspend fun applyUserMapping(result: TransactionExtractionResult): TransactionExtractionResult {

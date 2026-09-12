@@ -77,7 +77,14 @@ dependencies {
     implementation(libs.sqlite.ktx)
     implementation(libs.androidx.security.crypto)
 
+    // TensorFlow Lite / LiteRT
+    implementation(libs.tensorflow.lite.task.text)
+    implementation(libs.tensorflow.lite.metadata)
+
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.core.ktx)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
